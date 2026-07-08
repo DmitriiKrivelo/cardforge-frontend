@@ -21,7 +21,10 @@ function PublicCard() {
       
       if (response.data.template_id) {
         const templateRes = await api.get(`/api/templates/${response.data.template_id}`)
+        console.log('Ответ от /api/templates/:id:', templateRes.data)
         setTemplate(templateRes.data)
+      } else {
+        console.log('template_id отсутствует у визитки')
       }
     } catch (err) {
       setError('Визитка не найдена')
@@ -31,269 +34,564 @@ function PublicCard() {
   }
 
   const handlePhoneClick = () => {
-    if (card?.data?.phone) {
-      window.location.href = `tel:${card.data.phone}`
-    }
+    if (card?.data?.phone) window.location.href = `tel:${card.data.phone}`
   }
-
   const handleEmailClick = () => {
-    if (card?.data?.email) {
-      window.location.href = `mailto:${card.data.email}`
-    }
+    if (card?.data?.email) window.location.href = `mailto:${card.data.email}`
   }
-
   const handleWebsiteClick = () => {
-    if (card?.data?.website) {
-      window.open(card.data.website, '_blank')
-    }
+    window.open(websiteUrl, '_blank')
   }
-
-  const handleSocialClick = (url, type) => {
-    if (!url) return
-    
-    let fullUrl = url
-    if (type === 'telegram' && !url.includes('t.me')) {
-      fullUrl = `https://t.me/${url.replace('@', '')}`
-    } else if (type === 'linkedin' && !url.includes('linkedin.com')) {
-      fullUrl = `https://linkedin.com/in/${url}`
-    } else if (type === 'instagram' && !url.includes('instagram.com')) {
-      fullUrl = `https://instagram.com/${url}`
-    }
-    
-    window.open(fullUrl, '_blank')
+  const handleTelegramClick = () => {
+    if (card?.data?.telegram) window.open(card.data.telegram, '_blank')
   }
-
+  const handleMaxLinkClick = () => {
+    if (card?.data?.max_link) window.open(card.data.max_link, '_blank')
+  }
   const handleSaveContact = () => {
+    const fullName = `${card.data?.lastName || ''} ${card.data?.firstName || ''} ${card.data?.patronymic || ''}`.trim()
     const vCard = `BEGIN:VCARD
 VERSION:3.0
-FN:${card.data.name || ''}
-TITLE:${card.data.position || ''}
-ORG:${card.data.company || ''}
-TEL:${card.data.phone || ''}
-EMAIL:${card.data.email || ''}
-URL:${card.data.website || ''}
+FN:${fullName}
+TITLE:${card.data?.position || ''}
+ORG:${card.data?.company || 'ГК АГРОЭКО'}
+TEL:${card.data?.phone || ''}
+EMAIL:${card.data?.email || ''}
+URL:${card.data?.website || 'https://agroeco.ru/'}
 END:VCARD`
-
     const blob = new Blob([vCard], { type: 'text/vcard' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${card.data.name || 'contact'}.vcf`
+    a.download = `${fullName || 'contact'}.vcf`
     a.click()
     URL.revokeObjectURL(url)
   }
 
-  const templateData = template?.data || {}
-  const primaryColor = templateData.primaryColor || '#166534'
-  const secondaryColor = templateData.secondaryColor || '#f0fdf4'
-  const font = templateData.font || 'Arial'
+  const layoutType = template?.layout_type || 'vertical'
+  const data = card?.data || {}
+  const fullName = `${data.lastName || ''} ${data.firstName || ''} ${data.patronymic || ''}`.trim()
+  const companyName = data.company || 'ГК АГРОЭКО'
+  const websiteUrl = data.website || 'https://agroeco.ru/'
 
-  const styles = {
+  const baseStyles = {
     container: {
       minHeight: '100vh',
-      background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+      background: 'linear-gradient(135deg, #166534 0%, #14532d 100%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '20px',
-      fontFamily: font,
+      fontFamily: 'Arial, Helvetica, sans-serif',
     },
     card: {
+      backgroundColor: 'white',
+      borderRadius: '20px',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+      padding: '30px',
       maxWidth: '500px',
       width: '100%',
-      background: 'white',
-      borderRadius: '20px',
-      padding: '30px',
-      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-      textAlign: 'center',
-      fontFamily: font,
     },
     avatar: {
-      width: '120px',
-      height: '120px',
+      width: '100px',
+      height: '100px',
       borderRadius: '50%',
       objectFit: 'cover',
-      marginBottom: '20px',
-      border: `4px solid ${primaryColor}`,
-      boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+      border: '3px solid #15803d',
     },
     name: {
-      fontSize: '28px',
-      marginBottom: '8px',
+      fontSize: '24px',
+      fontWeight: 'bold',
+      margin: '0 0 8px 0',
       color: '#1e293b',
-      fontFamily: font,
     },
     position: {
-      fontSize: '18px',
-      color: primaryColor,
-      marginBottom: '5px',
-      fontFamily: font,
+      fontSize: '16px',
+      color: '#15803d',
+      marginBottom: '8px',
     },
     company: {
-      fontSize: '16px',
+      fontSize: '14px',
       color: '#666',
       marginBottom: '20px',
-      fontFamily: font,
     },
     divider: {
       height: '1px',
-      background: '#e0e0e0',
+      backgroundColor: '#e5e7eb',
       margin: '20px 0',
     },
     contactButton: {
       width: '100%',
-      padding: '12px',
-      marginBottom: '10px',
-      backgroundColor: '#f8f9fa',
-      border: `1px solid ${primaryColor}`,
-      borderRadius: '10px',
-      fontSize: '16px',
-      color: '#333',
-      cursor: 'pointer',
-      transition: 'all 0.3s',
-      textAlign: 'left',
-      fontFamily: font,
-    },
-    socialRow: {
-      display: 'flex',
-      gap: '10px',
-      justifyContent: 'center',
-      marginBottom: '20px',
-    },
-    socialButton: {
-      flex: 1,
       padding: '10px',
-      backgroundColor: primaryColor,
-      color: 'white',
-      border: 'none',
+      marginBottom: '10px',
+      backgroundColor: '#f3f4f6',
+      border: '1px solid #15803d',
       borderRadius: '10px',
-      fontSize: '14px',
       cursor: 'pointer',
-      transition: 'all 0.3s',
-      fontFamily: font,
+      textAlign: 'left',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+    },
+    emailButton: {
+      width: '100%',
+      padding: '10px',
+      marginBottom: '10px',
+      backgroundColor: '#f3f4f6',
+      border: '1px solid #15803d',
+      borderRadius: '10px',
+      cursor: 'pointer',
+      textAlign: 'left',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      color: '#3b82f6',
+      textDecoration: 'underline',
     },
     saveButton: {
       width: '100%',
-      padding: '14px',
-      backgroundColor: primaryColor,
+      padding: '12px',
+      backgroundColor: '#15803d',
       color: 'white',
       border: 'none',
       borderRadius: '10px',
-      fontSize: '16px',
-      fontWeight: 'bold',
       cursor: 'pointer',
-      transition: 'all 0.3s',
-      fontFamily: font,
+      fontWeight: 'bold',
     },
     views: {
       marginTop: '20px',
       fontSize: '12px',
       color: '#999',
-      fontFamily: font,
-    },
-    loading: {
       textAlign: 'center',
-      color: '#666',
-    },
-    error: {
-      textAlign: 'center',
-      color: '#e74c3c',
-      marginBottom: '20px',
-    },
-    button: {
-      padding: '10px 20px',
-      backgroundColor: primaryColor,
-      color: 'white',
-      border: 'none',
-      borderRadius: '10px',
-      cursor: 'pointer',
     },
   }
 
-  if (loading) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <p style={styles.loading}>Загрузка...</p>
-        </div>
+  const verticalStyles = {
+  card: {
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+    padding: '30px',
+    maxWidth: '500px',
+    width: '100%',
+  },
+  avatarContainer: {
+    textAlign: 'center',
+    marginBottom: '20px',
+  },
+  avatar: {
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '3px solid #15803d',
+  },
+  textCenter: {
+    textAlign: 'center',
+  },
+  name: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    marginBottom: '8px',
+    color: '#1e293b',
+  },
+  position: {
+    fontSize: '16px',
+    color: '#15803d',
+    marginBottom: '8px',
+  },
+  company: {
+    fontSize: '14px',
+    color: '#15803d',
+    marginBottom: '20px',
+  },
+  divider: {
+    height: '1px',
+    backgroundColor: '#e5e7eb',
+    margin: '20px 0',
+  },
+  row: {
+    display: 'flex',
+    gap: '15px',
+    marginBottom: '15px',
+  },
+  siteButton: {
+  width: '100%',
+  padding: '12px',
+  backgroundColor: '#15803d',
+  color: 'white',
+  border: 'none',
+  borderRadius: '10px',
+  cursor: 'pointer',
+  textAlign: 'center',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '8px',
+  fontSize: '14px',
+  fontWeight: '500',
+  marginBottom: '15px',
+  },
+  contactButton: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#f3f4f6',
+    border: '1px solid #15803d',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontSize: '14px',
+  },
+  emailButton: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#f3f4f6',
+    border: '1px solid #15803d',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    color: '#3b82f6',
+    textDecoration: 'underline',
+  },
+  socialRow: {
+    display: 'flex',
+    gap: '15px',
+    marginBottom: '15px',
+  },
+  socialButton: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#15803d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+  },
+  saveButton: {
+    width: '100%',
+    padding: '14px',
+    backgroundColor: '#15803d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '16px',
+  },
+  views: {
+    marginTop: '20px',
+    fontSize: '12px',
+    color: '#999',
+    textAlign: 'center',
+  },
+}
+
+  const horizontalStyles = {
+  container: {
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+    padding: '30px',
+    maxWidth: '700px',
+    width: '100%',
+    display: 'flex',
+    gap: '40px',
+    flexWrap: 'wrap',
+  },
+  leftColumn: {
+    flex: 1,
+    minWidth: '180px',
+    textAlign: 'center',
+  },
+  avatar: {
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '3px solid #15803d',
+    marginBottom: '15px',
+  },
+  name: {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    marginBottom: '8px',
+    color: '#1e293b',
+  },
+  position: {
+    fontSize: '14px',
+    color: '#15803d',
+    marginBottom: '0',
+  },
+  rightColumn: {
+    flex: 2,
+    minWidth: '250px',
+  },
+  row: {
+    display: 'flex',
+    gap: '15px',
+    marginBottom: '15px',
+    flexWrap: 'wrap',
+  },
+  siteButton: {
+    width: '100%',
+    padding: '12px',
+    backgroundColor: '#15803d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    marginBottom: '15px',
+  },
+  contactButton: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#f3f4f6',
+    border: '1px solid #15803d',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    transition: 'all 0.2s',
+  },
+  emailButton: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#f3f4f6',
+    border: '1px solid #15803d',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#3b82f6',
+    textDecoration: 'underline',
+  },
+  socialButton: {
+    flex: 1,
+    padding: '12px',
+    backgroundColor: '#15803d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+  },
+  saveButton: {
+    width: '100%',
+    padding: '12px',
+    backgroundColor: '#15803d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '16px',
+    marginTop: '10px',
+  },
+  views: {
+    marginTop: '20px',
+    fontSize: '12px',
+    color: '#999',
+    textAlign: 'center',
+  },
+}
+
+  const renderVertical = () => (
+  <div style={verticalStyles.card}>
+    {data.avatar && (
+      <div style={verticalStyles.avatarContainer}>
+        <img src={data.avatar} alt="avatar" style={verticalStyles.avatar} />
       </div>
-    )
-  }
+    )}
 
-  if (error) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <h2 style={styles.error}>{error}</h2>
-          <button onClick={() => navigate('/')} style={styles.button}>
-            На главную
-          </button>
-        </div>
-      </div>
-    )
-  }
+    <div style={verticalStyles.textCenter}>
+      <h1 style={verticalStyles.name}>{fullName || 'Без имени'}</h1>
+      {data.position && <p style={verticalStyles.position}>{data.position}</p>}
+      {companyName && <p style={verticalStyles.company}>{companyName}</p>}
+    </div>
 
-  const data = card?.data || {}
+    <div style={verticalStyles.divider} />
+    {websiteUrl && (
+      <button onClick={handleWebsiteClick} style={verticalStyles.siteButton}>
+        Сайт группы компаний
+      </button>
+    )}
+    <div style={verticalStyles.row}>
+      {data.phone && (
+        <button onClick={handlePhoneClick} style={verticalStyles.contactButton}>
+          {data.phone}
+        </button>
+      )}
+      {data.email && (
+        <button onClick={handleEmailClick} style={verticalStyles.emailButton}>
+          {data.email}
+        </button>
+      )}
+    </div>
 
-  return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        {data.avatar && (
-          <img src={data.avatar} alt="avatar" style={styles.avatar} />
-        )}
+    <div style={verticalStyles.socialRow}>
+      {data.telegram && (
+        <button onClick={handleTelegramClick} style={verticalStyles.socialButton}>
+          Telegram
+        </button>
+      )}
+      {data.max_link && (
+        <button onClick={handleMaxLinkClick} style={verticalStyles.socialButton}>
+          Max
+        </button>
+      )}
+    </div>
 
-        <h1 style={styles.name}>{data.name || 'Без имени'}</h1>
-        {data.position && <p style={styles.position}>{data.position}</p>}
-        {data.company && <p style={styles.company}>{data.company}</p>}
+    <div style={verticalStyles.divider} />
 
-        <div style={styles.divider} />
+    <button onClick={handleSaveContact} style={verticalStyles.saveButton}>
+      Сохранить контакт
+    </button>
 
+    <p style={verticalStyles.views}>{card?.views || 0} просмотров</p>
+  </div>
+)
+
+  const renderHorizontal = () => (
+  <div style={horizontalStyles.container}>
+    <div style={horizontalStyles.leftColumn}>
+      {data.avatar && (
+        <img src={data.avatar} alt="avatar" style={horizontalStyles.avatar} />
+      )}
+      <h1 style={horizontalStyles.name}>{fullName || 'Без имени'}</h1>
+      {data.position && <p style={horizontalStyles.position}>{data.position}</p>}
+      {companyName && <p style={horizontalStyles.company}>{companyName}</p>}
+    </div>
+
+    <div style={horizontalStyles.rightColumn}>
+      {websiteUrl && (
+        <button onClick={handleWebsiteClick} style={horizontalStyles.siteButton}>
+          Сайт Группы компаний
+        </button>
+      )}
+
+      <div style={horizontalStyles.row}>
         {data.phone && (
-          <button onClick={handlePhoneClick} style={styles.contactButton}>
+          <button onClick={handlePhoneClick} style={horizontalStyles.contactButton}>
             {data.phone}
           </button>
         )}
-
         {data.email && (
-          <button onClick={handleEmailClick} style={styles.contactButton}>
+          <button onClick={handleEmailClick} style={horizontalStyles.emailButton}>
             {data.email}
           </button>
         )}
+      </div>
 
-        {data.website && (
-          <button onClick={handleWebsiteClick} style={styles.contactButton}>
-            {data.website}
+      <div style={horizontalStyles.row}>
+        {data.telegram && (
+          <button onClick={handleTelegramClick} style={horizontalStyles.socialButton}>
+            Telegram
           </button>
         )}
-
-        <div style={styles.socialRow}>
-          {data.linkedin && (
-            <button onClick={() => handleSocialClick(data.linkedin, 'linkedin')} style={styles.socialButton}>
-              LinkedIn
-            </button>
-          )}
-          {data.telegram && (
-            <button onClick={() => handleSocialClick(data.telegram, 'telegram')} style={styles.socialButton}>
-              Telegram
-            </button>
-          )}
-          {data.instagram && (
-            <button onClick={() => handleSocialClick(data.instagram, 'instagram')} style={styles.socialButton}>
-              Instagram
-            </button>
-          )}
-        </div>
-
-        <div style={styles.divider} />
-
-        <button onClick={handleSaveContact} style={styles.saveButton}>
-          Сохранить контакт
-        </button>
-
-        <p style={styles.views}>Просмотров: {card?.views || 0}</p>
+        {data.max_link && (
+          <button onClick={handleMaxLinkClick} style={horizontalStyles.socialButton}>
+            Max
+          </button>
+        )}
       </div>
+
+      <button onClick={handleSaveContact} style={horizontalStyles.saveButton}>
+        Сохранить контакт
+      </button>
+
+      <p style={horizontalStyles.views}>{card?.views || 0} просмотров</p>
     </div>
-  )
+  </div>
+)
+
+  const renderCompact = () => (
+  <div style={verticalStyles.card}>
+    {data.avatar && (
+      <div style={verticalStyles.avatarContainer}>
+        <img src={data.avatar} alt="avatar" style={verticalStyles.avatar} />
+      </div>
+    )}
+
+    <div style={verticalStyles.textCenter}>
+      <h1 style={verticalStyles.name}>{fullName || 'Без имени'}</h1>
+      {data.position && <p style={verticalStyles.position}>{data.position}</p>}
+      {companyName && <p style={verticalStyles.company}>{companyName}</p>}
+    </div>
+
+    <div style={verticalStyles.divider} />
+
+    <div style={verticalStyles.socialRow}>
+      {data.telegram && (
+        <button onClick={handleTelegramClick} style={verticalStyles.socialButton}>
+          Telegram
+        </button>
+      )}
+      {data.max_link && (
+        <button onClick={handleMaxLinkClick} style={verticalStyles.socialButton}>
+          Max
+        </button>
+      )}
+    </div>
+
+    <div style={verticalStyles.divider} />
+
+    <button onClick={handleSaveContact} style={verticalStyles.saveButton}>
+      Сохранить контакт
+    </button>
+
+    <p style={verticalStyles.views}>👁️ {card?.views || 0} просмотров</p>
+  </div>
+)
+
+  if (loading) return <div style={baseStyles.container}><div style={baseStyles.card}>Загрузка...</div></div>
+  if (error) return <div style={baseStyles.container}><div style={baseStyles.card}><h2>{error}</h2><button onClick={() => navigate('/')}>На главную</button></div></div>
+
+  console.log('layoutType =', layoutType)
+  console.log('Шаблон:', template)
+  console.log('layoutType:', template?.layout_type)
+
+  if (layoutType === 'horizontal') return <div style={baseStyles.container}>{renderHorizontal()}</div>
+  if (layoutType === 'compact') return <div style={baseStyles.container}>{renderCompact()}</div>
+  return <div style={baseStyles.container}>{renderVertical()}</div>
 }
 
 export default PublicCard

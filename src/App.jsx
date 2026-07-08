@@ -6,6 +6,7 @@ import CardBuilder from './pages/CardBuilder'
 import PublicCard from './pages/PublicCard'
 import AdminPanel from './pages/AdminPanel'
 import TemplateManager from './pages/TemplateManager'
+import ReportGenerator from './pages/ReportGenerator';
 
 function App() {
   const token = localStorage.getItem('token')
@@ -21,6 +22,7 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard" />} />
         <Route path="/admin" element={token ? <AdminPanel /> : <Navigate to="/login" />} />
         <Route path="/admin/templates" element={token ? <TemplateManager /> : <Navigate to="/login" />} />
+        <Route path="/reports" element={token ? <ReportGenerator /> : <Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   )

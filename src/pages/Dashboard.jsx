@@ -122,6 +122,11 @@ function Dashboard() {
             </>
           )}
         </div>
+        <Link to="/reports">
+          <button style={{ padding: '10px 24px', backgroundColor: '#15803d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+            Сформировать отчет
+          </button>
+        </Link>
         <Link to="/builder">
           <button style={{ padding: '10px 24px', backgroundColor: '#15803d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
             Создать визитку
